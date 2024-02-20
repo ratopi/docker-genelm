@@ -1,0 +1,26 @@
+#!/bin/bash -ex
+
+fast=false
+
+if [ "$1" == "fast" ]; then
+	fast=true
+fi
+
+#
+
+SOURCE_FILE="src/Main.elm"
+TARGET_FILE_INTERIM="elm.js"
+TARGET_FILE="elm.min.js"
+
+
+elm make "$SOURCE_FILE" --optimize --output "$TARGET_FILE_INTERIM"
+
+if "$fast"; then
+	mv "$TARGET_FILE_INTERIM" "$TARGET_FILE"
+else
+	uglifyjs "$TARGET_FILE_INTERIM" --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' | uglifyjs --mangle --output "$TARGET_FILE"
+	rm "$TARGET_FILE_INTERIM"
+fi
+
+chown "$( ls -nl "$SOURCE_FILE" | sed -e 's:^[rwx-]* . ::' -e 's+ +:+' -e 's: .*::' )" "$TARGET_FILE"
+
