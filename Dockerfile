@@ -1,35 +1,22 @@
-FROM debian
+FROM node:21.2.0 AS elm_base
 
-WORKDIR /usr/local/
-
-
-# install nodejs for uglify-js
-
-RUN apt update && apt install -y curl xz-utils
-
-RUN curl -L https://nodejs.org/dist/v20.11.1/node-v20.11.1-linux-x64.tar.xz | tar xvJ
-
-RUN rmdir bin && ln -sv node-*/bin .
-
-RUN node --version
-
-RUN npm install -g uglify-js  &&  uglifyjs -v
-
+RUN apt-get update && \
+	apt-get install -y curl && \
+	npm install -g uglify-js
 
 # install elm
 
-RUN curl -L https://github.com/elm/compiler/releases/download/0.19.1/binary-for-linux-64-bit.gz | gunzip > bin/elm  &&  chmod +x bin/elm
+WORKDIR /usr/local/bin/
 
-RUN elm --version
+COPY bin/ .
 
-COPY bin/ bin/
-
-RUN chmod +x bin/*
-
+RUN curl -L https://github.com/elm/compiler/releases/download/0.19.1/binary-for-linux-64-bit.gz | gunzip > elm  && \
+	chmod +x elm && \
+	elm --version
 
 # runtime
 
 WORKDIR /APP/
 
-ENTRYPOINT ["do-release"]
+ENTRYPOINT ["generate-elm"]
 
