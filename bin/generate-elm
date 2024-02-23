@@ -1,26 +1,41 @@
-#!/bin/bash -ex
+#!/bin/bash
 
 fast=false
 
-if [ "$1" == "fast" ]; then
+if [ "$1" == "-f" ]; then
 	fast=true
+	shift
+fi
+
+SOURCE_FILE="src/Main.elm"
+
+if [ "$1" ]; then
+	SOURCE_FILE="$1"
 fi
 
 #
 
-SOURCE_FILE="src/Main.elm"
+if [ ! -e "elm.json" ]; then
+	echo "This is not an elm directory. Missing 'elm.json'."
+	echo "aborting ..."
+	exit 1
+fi
+
+#
+
 TARGET_FILE_INTERIM="elm.js"
 TARGET_FILE="elm.min.js"
-
 
 elm make "$SOURCE_FILE" --optimize --output "$TARGET_FILE_INTERIM"
 
 if "$fast"; then
-	mv "$TARGET_FILE_INTERIM" "$TARGET_FILE"
+	mv -v "$TARGET_FILE_INTERIM" "$TARGET_FILE"
 else
+	echo "generating $TARGET_FILE"
 	uglifyjs "$TARGET_FILE_INTERIM" --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' | uglifyjs --mangle --output "$TARGET_FILE"
 	rm "$TARGET_FILE_INTERIM"
 fi
 
+# set uid and gid 
 chown "$( ls -nl "$SOURCE_FILE" | sed -e 's:^[rwx-]* . ::' -e 's+ +:+' -e 's: .*::' )" "$TARGET_FILE"
 
